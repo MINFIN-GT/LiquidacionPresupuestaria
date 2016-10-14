@@ -152,11 +152,9 @@ public class CLiquidacionPresupuestaria {
 		// writer.println(String.join(""," ",
 		// rsGastos.getString("renglon_nombre")+", Q
 		// ",gasto_muni.toString()));
-
+		
 		// if(show_pagos)
 		// writer.println("saldo_muni: "+saldo_muni);
-		// writer.println();
-
 	}
 
 }

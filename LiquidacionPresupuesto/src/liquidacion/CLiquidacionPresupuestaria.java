@@ -9,9 +9,9 @@ import utils.CLogger;
 
 public class CLiquidacionPresupuestaria {
 
-	private static final String QUERY_GASTOS_MUNI = "select * from GASTO WHERE monto_renglon>0 AND fuente=29 ORDER BY fec_aprobado";
-	private static final String QUERY_GASTOS_FONDO = "select * from GASTO WHERE monto_renglon>0 AND fuente=11 ORDER BY fec_aprobado";
-	private static final String QUERY_PAGO = "select * from ISCV order by fecha_recaudo";
+	private static final String QUERY_GASTOS_MUNI = "select * from GASTO WHERE monto_renglon>0 AND fuente=29 and mes = 2 ORDER BY mes";
+	private static final String QUERY_GASTOS_FONDO = "select * from GASTO WHERE monto_renglon>0 AND fuente=11 and mes = 2 ORDER BY mes";
+	private static final String QUERY_PAGO = "select * from ISCV where fecha_recaudo >= str_to_date('01/02/2016','%d/%m/%Y') and fecha_recaudo < str_to_date('01/03/2016','%d/%m/%Y') order by fecha_recaudo";
 
 	private static final String INSERT_PAGO_GASTOS = "insert into ISCV_GASTO (formulario,documento,geografico_ingreso,no_cur,entidad,unidad_ejecutora,programa,subprograma,proyecto,actividad,obra,renglon,geografico_gasto,monto,tipo) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
@@ -107,7 +107,7 @@ public class CLiquidacionPresupuestaria {
 					cont++;
 					if (cont % 1000 == 0) {
 						writer.println("SE HAN INSERTADO: " + (cont / 1000) + " MIL");
-
+						writer.flush();
 					}
 				}
 

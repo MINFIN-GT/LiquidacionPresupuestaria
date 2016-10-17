@@ -24,7 +24,6 @@ public class CLiquidacionPresupuestaria {
 		CDatabase dbpago_gastos = new CDatabase();
 
 		try {
-
 			if (dbGastosMuni.isOpen() && dbpago_munis.isOpen() && dbGastosFondo.isOpen() && dbpago_munis.isOpen()
 					&& dbpago_gastos.isOpen()) {
 

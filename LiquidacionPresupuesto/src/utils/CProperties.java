@@ -16,17 +16,23 @@ public class CProperties {
 		properties = new Properties();
 		try {
 			input = CProperties.class.getClassLoader().getResourceAsStream("data.properties");
-				properties.load(input);
-				host = properties.getProperty("host");
-				port = properties.getProperty("port") != null ? Integer.parseInt(properties.getProperty("port")) : null;
-				user = properties.getProperty("user");
-				password = properties.getProperty("password");
-				schema = properties.getProperty("schema");
+			
+			properties.load(input);
+			host = properties.getProperty("host");
+			port = properties.getProperty("port") != null ? Integer.parseInt(properties.getProperty("port")) : null;
+			user = properties.getProperty("user");
+			password = properties.getProperty("password");
+			schema = properties.getProperty("schema");
+			
 		} catch (Exception e) {
 			CLogger.writeFullConsole("Error 1: CProperties.class", e);
 		} finally {
 
 		}
+	}
+
+	public static String getProperty(String propertyKey) {
+		return properties.getProperty(propertyKey);
 	}
 
 	public static Properties getProperties() {

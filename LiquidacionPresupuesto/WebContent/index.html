@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ejecución Presupuestaría</title>
+<script type="text/javascript">
+	function isValidEmail(mail){
+	    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,4})+$/.test(mail);
+	}
+	
+	function isNumeric(n) {
+		return !isNaN(parseFloat(n)) && isFinite(n);
+	}
+	
+	function enviarCorreo(){
+		var toMail = document.getElementById('uiEmail').value;
+		console.log("Enviar a: " + toMail);
+		
+		if(isValidEmail(toMail)){
+			window.open('SLiquidacion?accion=mail&to=' + toMail, "", "width=400,height=100");
+			console.log("...enviando")
+		}else{
+			console.log("email no valido")
+		    document.getElementById("result").innerHTML = "email no valido";
+		}
+
+	}
+	
+	function cargarDatos(){
+		var mes = parseInt(document.getElementById('uiMes').value);
+		console.log("Mes a insertar: " + mes);
+		
+		if(isNumeric(mes) && mes > 0 && mes < 13){
+			window.open("SLiquidacion?mes=" + mes);
+			console.log("...cargando")
+		}else{
+			console.log("mes debe estar entre 1 y 12")
+		    document.getElementById("result").innerHTML = "mes debe estar entre 1 y 12";
+		} 
+	}
+
+</script>
+</head>
+<body>
+	<table>
+		<tr>
+			<td>Mes a cargar:</td>
+			<td><input id="uiMes" type="text" /></td>
+			<td><input id="uiEjecutar" type="button" value="Ejecutar" onclick="cargarDatos()" /></td>
+		</tr>
+		<tr>
+			<td>Enviar correo a:</td>
+			<td><input id="uiEmail" type="text" /></td>
+			<td><input id="uiEjecutar" type="button" value="Enviar e-mail" onclick="enviarCorreo()"/></td>
+		</tr>
+	</table>
+	<p id="result"></p>
+</body>
+</html>

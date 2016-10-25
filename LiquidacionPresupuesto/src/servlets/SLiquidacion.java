@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import liquidacion.CGetISCVs;
 import liquidacion.CLiquidacionPresupuestaria;
 import utils.CUtils;
 
@@ -36,15 +37,15 @@ public class SLiquidacion extends HttpServlet {
 
 		String accion = request.getParameter("accion");
 		String mailTo = request.getParameter("to");
+		String orden = request.getParameter("orden");
 
 		String mes = request.getParameter("mes");
 
-		if (!CUtils.isEmpty(accion) && !CUtils.isEmpty(mailTo) && accion.contains("mail")) {
-			StringBuffer buffer = new StringBuffer();
-			buffer.append("esto es una <b>prueba de html</b> de <i>envio de correo</i>");
+		if (!CUtils.isEmpty(accion) && !CUtils.isEmpty(mailTo) && !CUtils.isEmpty(orden) && accion.contains("mail")) {
+			CGetISCVs iscv = new CGetISCVs();
 
-			CUtils.send("rdminfin@gmail.com", mailTo, "", "", "Prueba de HTML", true, buffer);
-			
+			iscv.generarCorreo(orden, mailTo);
+
 		} else if (!CUtils.isEmpty(mes)) {
 			CLiquidacionPresupuestaria.liquidarPresupuesto(response.getWriter(), false, mes);
 

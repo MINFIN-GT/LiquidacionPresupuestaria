@@ -1,6 +1,7 @@
 package utils;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -13,6 +14,29 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 public class CUtils {
+
+	public static final String MAIL_SUBJECT = "¡Conozca en qué fue invertido su pago del impuesto sobre circulación de vehículos 2016!";
+	public static final String MAIL_BODY = "Estimado <b>#USUARIO#</b>,<br />" + "<br />"
+			+ "Como parte de nuestra tarea de transparencia en el manejo de los impuestos de los contribuyentes.  "
+			+ "Atentamente le informamos que su pago de impuesto sobre circulación de vehículos de <b>Q #MONTO#</b>, fue destinado hacia los siguientes programas:<br />"
+			+ "<br />" + "#MUNI#" + "<br />" + "#FONDO#" + "<br />"
+			+ "Agradecemos su aporte responsable con el país y le invitamos a seguir con el cumplimiento de sus deberes ciudadano.  "
+			+ "Por nuestra parte, le reiteramos por velar porque los recursos de los guatemaltecos sean asignados a las necesidades más sentidas de la población.<br />"
+			+ "<br />" + "También le invitamos a seguirnos en las redes sociales para conocer más,<br />" + "<br />"
+			+ "<a href=\"https://es-la.facebook.com/minfingt\">" + "<img src=\"cid:imageFB\" "
+			+ "alt=\"https://es-la.facebook.com/minfingt\"/>" + "</a>"
+			+ "<a href=\"https://twitter.com/minfingt?lang=es\">" + "<img src=\"cid:imageTW\" "
+			+ "alt=\"https://twitter.com/minfingt?lang=es\"/>" + "</a>" + "<br />" + "<br />" + "Atentamente,<br />"
+			+ "<br />"
+			+ "<div style=\"text-align:center;\">Ministerio de Finanzas Públicas y Superintendencia de Administración Tributaria"
+			+ "<br />" + "<br />" + "<img src=\"cid:imageMF\" alt=\"MinFin\"/>"
+			+ "<img src=\"cid:imageSAT\" alt=\"SAT\"/>" + "</div>";
+
+	public static final String TEXT_MUNI = "<b>#RENGLON#</b><br />"
+			+ "MUNICIPALIDAD DE #MUNICIPIO#, #DEPARTAMENTO#<br />" + "Aporte: <b>Q #MONTO#</b><br />";
+
+	public static final String TEXT_FONDO = "#ENTIDAD#, #UNIDAD#<br />" + "#MUNICIPIO#, #DEPARTAMENTO#<br />"
+			+ "<b>#RENGLON#</b><br />" + "Aporte: <b>Q #MONTO#</b><br />";
 
 	public static boolean isEmpty(String cadena) {
 
@@ -42,7 +66,7 @@ public class CUtils {
 	}
 
 	public static boolean send(String fromAddress, String toAddress, String ccAddress, String bccAddress,
-			String subject, boolean isHTMLFormat, StringBuffer body) {
+			String subject, boolean isHTMLFormat, StringBuffer body, Map<String, String> images) {
 
 		if (emailValido(fromAddress) && emailValido(toAddress)) {
 
@@ -91,6 +115,16 @@ public class CUtils {
 				}
 
 				multipart.addBodyPart(mbp);
+
+				if (images != null) {
+					for (String key : images.keySet()) {
+						MimeBodyPart imagePart = new MimeBodyPart();
+						imagePart.attachFile(images.get(key));
+						imagePart.setContentID("<" + key + ">");
+						imagePart.setDisposition(MimeBodyPart.INLINE);
+						multipart.addBodyPart(imagePart);
+					}
+				}
 
 				msg.setContent(multipart);
 

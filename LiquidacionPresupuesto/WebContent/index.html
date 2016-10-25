@@ -3,57 +3,291 @@
 <head>
 <meta charset="UTF-8">
 <title>Ejecución Presupuestaría</title>
+<style type="text/css">
+#table_box {
+	width: 100%;
+	font-size: 11px;
+	border-collapse: collapse;
+	text-align: center;
+}
+
+#table_box th {
+	padding: 7px;
+	color: #292929;
+}
+
+#table_box th:hover {
+	padding: 7px;
+	color: #292929;
+}
+
+#table_box td {
+	padding: 4px 0 4px 0;
+	color: #464646;
+	border: 1px solid #cecece;
+}
+
+.maintb th {
+	background-color: #174797;
+	color: #FFF !important;
+}
+
+#table_box tr:nth-child(odd) td {
+	background-color: #f0f0f0
+} /*odd*/
+#table_box tr:nth-child(even) td {
+	background-color: #ffffff
+} /* even*/
+#table_box tr:hover td {
+	background-color: #fffbae;
+} /* hovering */
+#container {
+	width: 100%;
+	text-align: center;
+}
+
+#left {
+	float: left;
+	width: 100px;
+	height: 20px;
+}
+
+#center {
+	display: inline-block;
+	margin: 0 auto;
+	width: 300px;
+	height: 20px;
+}
+
+#right {
+	float: right;
+	width: 100px;
+	height: 20px;
+}
+</style>
+
 <script type="text/javascript">
-	function isValidEmail(mail){
-	    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,4})+$/.test(mail);
+	var ajax = {};
+
+	ajax.x = function() {
+		if (typeof XMLHttpRequest !== 'undefined') {
+			return new XMLHttpRequest();
+		}
+		var versions = [ "MSXML2.XmlHttp.6.0", "MSXML2.XmlHttp.5.0",
+				"MSXML2.XmlHttp.4.0", "MSXML2.XmlHttp.3.0",
+				"MSXML2.XmlHttp.2.0", "Microsoft.XmlHttp" ];
+
+		var xhr;
+		for (var i = 0; i < versions.length; i++) {
+			try {
+				xhr = new ActiveXObject(versions[i]);
+				break;
+			} catch (e) {
+			}
+		}
+		return xhr;
+	};
+
+	ajax.send = function(url, callback, method, data, async) {
+		if (async === undefined) {
+			async = true;
+		}
+		var x = ajax.x();
+		x.open(method, url, async);
+		x.onreadystatechange = function() {
+			if (x.readyState == 4) {
+				callback(x.responseText)
+			}
+		};
+		if (method == 'POST') {
+			x.setRequestHeader('Content-type',
+					'application/x-www-form-urlencoded');
+		}
+		x.send(data)
+	};
+
+	ajax.get = function(url, data, callback, async) {
+		var query = [];
+		for ( var key in data) {
+			query.push(encodeURIComponent(key) + '='
+					+ encodeURIComponent(data[key]));
+		}
+		ajax.send(url + (query.length ? '?' + query.join('&') : ''), callback,
+				'GET', null, async)
+	};
+
+	ajax.post = function(url, data, callback, async) {
+		var query = [];
+		for ( var key in data) {
+			query.push(encodeURIComponent(key) + '='
+					+ encodeURIComponent(data[key]));
+		}
+		ajax.send(url, callback, 'POST', query.join('&'), async)
+	};
+</script>
+
+<script type="text/javascript">
+	var pos = 1;
+
+	function isValidEmail(mail) {
+		return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,4})+$/.test(mail);
 	}
-	
+
 	function isNumeric(n) {
 		return !isNaN(parseFloat(n)) && isFinite(n);
 	}
-	
-	function enviarCorreo(){
-		var toMail = document.getElementById('uiEmail').value;
-		console.log("Enviar a: " + toMail);
-		
-		if(isValidEmail(toMail)){
-			window.open('SLiquidacion?accion=mail&to=' + toMail, "", "width=400,height=100");
-			console.log("...enviando")
-		}else{
-			console.log("email no valido")
-		    document.getElementById("result").innerHTML = "email no valido";
-		}
 
-	}
-	
-	function cargarDatos(){
+	function cargarDatos() {
 		var mes = parseInt(document.getElementById('uiMes').value);
 		console.log("Mes a insertar: " + mes);
-		
-		if(isNumeric(mes) && mes > 0 && mes < 13){
+
+		if (isNumeric(mes) && mes > 0 && mes < 13) {
 			window.open("SLiquidacion?mes=" + mes);
 			console.log("...cargando")
-		}else{
+		} else {
 			console.log("mes debe estar entre 1 y 12")
-		    document.getElementById("result").innerHTML = "mes debe estar entre 1 y 12";
-		} 
+			document.getElementById("result").innerHTML = "mes debe estar entre 1 y 12";
+		}
 	}
 
+	function loadISCVs() {
+
+		var cantidad = Number(document.getElementById("uiMostar").value);
+
+		var startPos = (pos - 1) * cantidad + 1;
+		var endPos = (pos) * cantidad;
+
+		ajax.post('SGetISCVPaids', {
+			from : startPos,
+			to : endPos
+		}, function(res) {
+			var jres = JSON.parse(res);
+
+			getTable(jres.data);
+
+			document.getElementById("pagina").innerHTML = "Registros: "
+					+ startPos + " to " + endPos;
+
+		}, true);
+	}
+
+	function reiniciar() {
+		pos = 1;
+
+		loadISCVs();
+	}
+
+	function anterior() {
+		if (pos > 1) {
+			pos--;
+			loadISCVs();
+		}
+	}
+
+	function siguiente() {
+		pos++;
+
+		loadISCVs();
+	}
+
+	function getTable(data) {
+		var table = "<table  id=\"table_box\" class=\"maintb\">";
+		table += "<tr><th>Documento</th><th>Formulario</th><th>Valor</th></tr>";
+
+		for (var i = 0; i < data.length; i++) {
+			table += "<tr onclick=\"selected(" + data[i].orden + ")\">";
+			table += "<td>" + data[i].documento + "</td>";
+			table += "<td>" + data[i].formulario + "</td>";
+			table += "<td>" + data[i].pago + "</td>";
+			table += "</tr>";
+
+		}
+
+		table += "</table>";
+		document.getElementById("content").innerHTML = table;
+	}
+
+	function selected(orden) {
+		console.log("Enviar correo al: " + orden);
+
+		enviarCorreo(orden);
+	}
+
+	function enviarCorreo(orden) {
+		var email = prompt("Ingrese correo para enviar " + orden, "");
+
+		if (email != null) {
+			console.log("Enviar a: " + email);
+
+			if (isValidEmail(email)) {
+				ajax.get('SLiquidacion', {
+					orden : orden,
+					accion : 'mail',
+					to : email
+				}, function(res) {
+					console.log("...enviado");
+				}, true);
+
+			} else {
+				console.log("email no valido")
+				document.getElementById("result").innerHTML = "email no valido";
+			}
+		}
+	}
 </script>
 </head>
-<body>
+<body onload="loadISCVs()">
 	<table>
 		<tr>
 			<td>Mes a cargar:</td>
 			<td><input id="uiMes" type="text" /></td>
-			<td><input id="uiEjecutar" type="button" value="Ejecutar" onclick="cargarDatos()" /></td>
-		</tr>
-		<tr>
-			<td>Enviar correo a:</td>
-			<td><input id="uiEmail" type="text" /></td>
-			<td><input id="uiEjecutar" type="button" value="Enviar e-mail" onclick="enviarCorreo()"/></td>
+			<td><input id="uiEjecutar" type="button" value="Ejecutar"
+				onclick="cargarDatos()" /></td>
 		</tr>
 	</table>
 	<p id="result"></p>
+
+	Número de registros a mostrar:
+	<select id="uiMostar" onchange="reiniciar()" style="width: 100px;">
+		<option value="10">10</option>
+		<option value="20">20</option>
+		<option value="30">30</option>
+		<option value="40">40</option>
+		<option value="50">50</option>
+	</select>
+	<br />
+	<br />
+
+	<div id="content">
+		<table id="table_box" class="maintb">
+			<tr>
+				<th>Documento</th>
+				<th>Formulario</th>
+				<th>Valor</th>
+			</tr>
+			<tr onclick="selected(1)">
+				<td>1</td>
+				<td>1</td>
+				<td>1</td>
+			</tr>
+		</table>
+	</div>
+
+	<br />
+
+	<div id="container">
+		<div id="left">
+			<input id="uiEjecutar" type="button" value="<< Anterior"
+				onclick="anterior()" />
+		</div>
+		<div id="center">
+			<div id="pagina"></div>
+		</div>
+		<div id="right">
+			<input id="uiEjecutar" type="button" value="Siguiente >>"
+				onclick="siguiente()" />
+		</div>
+	</div>
+
 </body>
 </html>

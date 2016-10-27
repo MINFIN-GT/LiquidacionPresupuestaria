@@ -15,6 +15,8 @@ public class CLiquidacionPresupuestaria {
 
 	private static final String INSERT_PAGO_GASTOS = "insert into ISCV_GASTO (formulario,documento,geografico_ingreso,no_cur,entidad,unidad_ejecutora,programa,subprograma,proyecto,actividad,obra,renglon,geografico_gasto,monto,tipo) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
+	private static final String QUERY_PAGO_GASTOS = "select * from ISCV_GASTO order by id";
+
 	public static boolean liquidarPresupuesto(PrintWriter writer, boolean show_pagos, String mes) {
 		CDatabase dbGastosMuni = new CDatabase();
 		CDatabase dbGastosFondo = new CDatabase();
@@ -153,18 +155,76 @@ public class CLiquidacionPresupuestaria {
 				rsGastos.getDouble("obra"), rsGastos.getDouble("renglon"), rsGastos.getDouble("geografico"),
 				pago < 0 ? pago * -1 : pago, tipo);
 
-		// writer.println(String.join(""," Entidad:
-		// ",rsGastos.getString("entidad_nombre"),",
-		// ",rsGastos.getString("unidad_ejecutora_nombre")));
-		// writer.println(String.join("","
-		// ",rsGastos.getString("municipio_nombre"),",
-		// ",rsGastos.getString("departamento_nombre")));
-		// writer.println(String.join(""," ",
-		// rsGastos.getString("renglon_nombre")+", Q
-		// ",gasto_muni.toString()));
+	}
 
-		// if(show_pagos)
-		// writer.println("saldo_muni: "+saldo_muni);
+	private static String getQueryGasto() {
+		StringBuilder query = new StringBuilder();
+
+		query.append(
+				"select i.valor_pago, i.fecha_recaudo, i.documento, i.formulario, ig.tipo, ig.monto, g.municipio_nombre, g.departamento_nombre, g.entidad_nombre, g.unidad_ejecutora_nombre, g.renglon_nombre ");
+		query.append("from ISCV i,  ");
+		query.append("ISCV_GASTO ig, ");
+		query.append("GASTO g ");
+		query.append("where ig.documento = i.documento ");
+		query.append("and ig.formulario = i.formulario  ");
+		query.append("and g.no_cur = ig.no_cur ");
+		query.append("and g.entidad = ig.entidad ");
+		query.append("and g.unidad_ejecutora = ig.unidad_ejecutora ");
+		query.append("and g.programa = ig.programa ");
+		query.append("and g.subprograma = ig.subprograma ");
+		query.append("and g.proyecto = ig.proyecto ");
+		query.append("and g.actividad = ig.actividad ");
+		query.append("and g.obra = ig.obra ");
+		query.append("and g.renglon = ig.renglon ");
+		query.append("and g.mes = ig.mes ");
+		query.append("order by i.orden");
+
+		return query.toString();
+	}
+
+	public static void getImpuestoGasto(PrintWriter writer) {
+		CDatabase dbpago_gastos = new CDatabase();
+
+		try {
+			if (dbpago_gastos.isOpen()) {
+
+				ResultSet rsPagoGastos = dbpago_gastos.runQuery(getQueryGasto());
+
+				Long cont = 0l;
+				Double documento = null;
+				Double documentoAnt = null;
+				while (rsPagoGastos.next()) {
+					
+					documento = rsPagoGastos.getDouble("documento");
+					
+					if (documento != documentoAnt) {
+						cont++;
+						writer.println("Contribuyente #" + cont + " con su aporte Q. " + String.valueOf(rsPagoGastos.getDouble("valor_pago")) + " usted contribuyo a: ");
+						writer.print(" ");
+						documentoAnt = documento;
+					}
+
+					if (rsPagoGastos.getString("tipo").equals("MU")) {
+						writer.println(String.join("", rsPagoGastos.getString("renglon")));
+						writer.println(String.join("", "    Municipalidad de ", rsPagoGastos.getString("municipio_nombre"),",", rsPagoGastos.getString("departamento_nombre")));
+						writer.println(String.join("", "    Aporte Q. ", String.valueOf(rsPagoGastos.getDouble("monto")) ));
+						writer.print(" ");
+					} else {
+						writer.println(String.join("", "Entidad:", rsPagoGastos.getString("entidad_nombre"), ",",rsPagoGastos.getString("unidad_ejecutora_nombre")));
+						writer.println(String.join("", "    ", rsPagoGastos.getString("municipio_nombre"), ",",rsPagoGastos.getString("departamento_nombre")));
+						writer.println(String.join("", "    ", rsPagoGastos.getString("renglon_nombre")));
+						writer.println(String.join("", "    Aporte Q. ", String.valueOf(rsPagoGastos.getDouble("monto")) ));
+						writer.print(" ");
+					}
+				}
+			}
+		} catch (Exception e) {
+			try {
+				dbpago_gastos.close();
+			} catch (SQLException se) {
+				CLogger.writeFullConsole("ERROR-CLOSE: getImpuestoGasto(): ", se);
+			}
+		}
 	}
 
 }

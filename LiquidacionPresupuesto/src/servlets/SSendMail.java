@@ -1,29 +1,27 @@
 package servlets;
 
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import liquidacion.CLiquidacionPresupuestaria;
+import liquidacion.CGetISCVs;
 import utils.CUtils;
 
 /**
- * Servlet implementation class SLiquidacion
+ * Servlet implementation class SSendMail
  */
-@WebServlet("/SLiquidacion")
-public class SLiquidacion extends HttpServlet {
+@WebServlet("/SSendMail")
+public class SSendMail extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
 	 */
-	public SLiquidacion() {
+	public SSendMail() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -32,18 +30,16 @@ public class SLiquidacion extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
 
-		String mes = request.getParameter("mes");
+		String mailTo = request.getParameter("to");
+		String orden = request.getParameter("orden");
 
-		if (!CUtils.isEmpty(mes)) {
-			CLiquidacionPresupuestaria.liquidarPresupuesto(response.getWriter(), false, mes);
-		} else {
-			CLiquidacionPresupuestaria.getImpuestoGasto(response.getWriter());
+		if (!CUtils.isEmpty(mailTo) && !CUtils.isEmpty(orden)) {
+			CGetISCVs iscv = new CGetISCVs();
+
+			iscv.generarCorreo(orden, mailTo);
+
 		}
-
-		response.getWriter().flush();
-		response.getWriter().close();
 	}
 
 	/**
@@ -52,8 +48,7 @@ public class SLiquidacion extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		// doGet(request, response);
+		doGet(request, response);
 	}
 
 }

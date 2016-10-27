@@ -145,8 +145,8 @@
 			window.open("SLiquidacion?mes=" + mes);
 			console.log("...cargando")
 		} else {
-			console.log("mes debe estar entre 1 y 12")
-			document.getElementById("result").innerHTML = "mes debe estar entre 1 y 12";
+			window.open("SLiquidacion");
+			console.log("...cargando")
 		}
 	}
 
@@ -220,9 +220,8 @@
 			console.log("Enviar a: " + email);
 
 			if (isValidEmail(email)) {
-				ajax.get('SLiquidacion', {
+				ajax.get('SSendMail', {
 					orden : orden,
-					accion : 'mail',
 					to : email
 				}, function(res) {
 					console.log("...enviado");

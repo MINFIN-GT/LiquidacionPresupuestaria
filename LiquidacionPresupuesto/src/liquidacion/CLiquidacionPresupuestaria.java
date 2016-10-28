@@ -9,7 +9,7 @@ import utils.CLogger;
 
 public class CLiquidacionPresupuestaria {
 
-	private static final String QUERY_GASTOS_MUNI = "select * from GASTO WHERE monto_renglon>0 AND fuente=29 and mes = %d ORDER BY mes";
+	private static final String QUERY_GASTOS_MUNI = "select * from GASTO WHERE monto_renglon>0 AND fuente=29 and organismo = 101 and correlativo = 2 and mes = %d ORDER BY mes";
 	private static final String QUERY_GASTOS_FONDO = "select * from GASTO WHERE monto_renglon>0 AND fuente=11 and mes = %d ORDER BY mes";
 	private static final String QUERY_PAGO = "select * from ISCV where fecha_recaudo >= str_to_date(%s) and fecha_recaudo < str_to_date(%s) order by fecha_recaudo";
 

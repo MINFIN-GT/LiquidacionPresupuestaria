@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.Properties;
 
 import utils.CProperties;
 
@@ -86,8 +87,18 @@ public class CDatabase {
 		if (connection == null || connection.isClosed()) {
 			try{
 				Class.forName("com.mysql.jdbc.Driver");
-				connection = DriverManager.getConnection("jdbc:mysql://" + getHost() + ":" + getPort() + "/" + getSchema()
-					+ "?" + "user=" + getUser() + "&password=" + getPassword());
+
+                String url = "jdbc:mysql://" + getHost() + ":" + getPort() + "/" + getSchema();
+
+                Properties connProperties = new Properties();
+                connProperties.put("user", getUser());
+                connProperties.put("password", getPassword());
+                connProperties.put("autoReconnect", "true");
+                connProperties.put("maxReconnects", "10");
+                connProperties.setProperty("useSSL", "false");
+                connProperties.setProperty("netTimeoutForStreamingResults", "14400");
+
+                connection = DriverManager.getConnection(url, connProperties);
 			}
 			catch(Exception e){
 				
@@ -105,7 +116,7 @@ public class CDatabase {
 		if (stSelect == null) {
 			stSelect = getConnection().createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY,
 					java.sql.ResultSet.CONCUR_READ_ONLY);
-			stSelect.setFetchSize(Integer.MIN_VALUE);
+			stSelect.setFetchSize(1000);
 		}
 		return stSelect;
 	}

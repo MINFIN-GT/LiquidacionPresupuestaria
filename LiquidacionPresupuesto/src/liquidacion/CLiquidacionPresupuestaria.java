@@ -15,8 +15,6 @@ public class CLiquidacionPresupuestaria {
 
 	private static final String INSERT_PAGO_GASTOS = "insert into ISCV_GASTO (formulario,documento,geografico_ingreso,no_cur,entidad,unidad_ejecutora,programa,subprograma,proyecto,actividad,obra,renglon,geografico_gasto,monto,tipo) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-	private static final String QUERY_PAGO_GASTOS = "select * from ISCV_GASTO order by id";
-
 	public static boolean liquidarPresupuesto(PrintWriter writer, boolean show_pagos, String mes) {
 		CDatabase dbGastosMuni = new CDatabase();
 		CDatabase dbGastosFondo = new CDatabase();
@@ -160,8 +158,9 @@ public class CLiquidacionPresupuestaria {
 	private static String getQueryGasto() {
 		StringBuilder query = new StringBuilder();
 
+		query.append("select i.orden, i.documento, i.formulario, i.valor_pago, i.fecha_recaudo, ig.tipo, ig.monto");
 		query.append(
-				"select i.valor_pago, i.fecha_recaudo, i.documento, i.formulario, ig.tipo, ig.monto, g.municipio_nombre, g.departamento_nombre, g.entidad_nombre, g.unidad_ejecutora_nombre, g.renglon_nombre ");
+				", g.municipio_nombre, g.departamento_nombre, g.entidad_nombre, g.unidad_ejecutora_nombre, g.renglon_nombre ");
 		query.append("from ISCV i,  ");
 		query.append("ISCV_GASTO ig, ");
 		query.append("GASTO g ");
@@ -177,8 +176,10 @@ public class CLiquidacionPresupuestaria {
 		query.append("and g.obra = ig.obra ");
 		query.append("and g.renglon = ig.renglon ");
 		query.append("and g.mes = ig.mes ");
+		query.append(
+				"and ( (ig.tipo = 'MU' and g.organismo = 101 and g.correlativo = 2 and g.fuente = 29)  or (ig.tipo = 'FC' and g.fuente = 11)) ");
+		query.append("and i.orden >= %d and i.orden <= %d ");
 		query.append("order by i.orden");
-
 		return query.toString();
 	}
 
@@ -186,39 +187,75 @@ public class CLiquidacionPresupuestaria {
 		CDatabase dbpago_gastos = new CDatabase();
 
 		try {
-			if (dbpago_gastos.isOpen()) {
+			System.out.println("Iniciando...");
 
-				ResultSet rsPagoGastos = dbpago_gastos.runQuery(getQueryGasto());
+			boolean hayDatos = true;
 
-				Long cont = 0l;
-				Double documento = null;
-				Double documentoAnt = null;
-				while (rsPagoGastos.next()) {
-					
-					documento = rsPagoGastos.getDouble("documento");
-					
-					if (documento != documentoAnt) {
-						cont++;
-						writer.println("Contribuyente #" + cont + " con su aporte Q. " + String.valueOf(rsPagoGastos.getDouble("valor_pago")) + " usted contribuyo a: ");
-						writer.print(" ");
+			long index = 0;
+			long limiteMax = index + 1000;
+
+			long cont = 0l;
+			Double documento = null;
+			Double documentoAnt = null;
+
+			while (hayDatos) {
+
+				if (dbpago_gastos.isOpen()) {
+
+					String query = String.format(getQueryGasto(), index + 1, limiteMax);
+					System.out.println(query);
+
+					ResultSet rsPagoGastos = dbpago_gastos.runQuery(query);
+
+					while (rsPagoGastos.next()) {
+						index = rsPagoGastos.getLong("orden");
+
 						documentoAnt = documento;
+						documento = rsPagoGastos.getDouble("documento");
+
+						if (!documento.equals(documentoAnt)) {
+							cont++;
+							writer.println("Contribuyente #" + cont + " con su aporte Q. "
+									+ String.valueOf(rsPagoGastos.getDouble("valor_pago")) + " usted contribuyo a: ");
+							writer.print(" ");
+
+							writer.flush();
+						}
+
+						if (rsPagoGastos.getString("tipo").equals("MU")) {
+							writer.println(String.join("", "    ", rsPagoGastos.getString("renglon_nombre")));
+							writer.println(String.join("", "         Municipalidad de ",
+									rsPagoGastos.getString("municipio_nombre"), ",",
+									rsPagoGastos.getString("departamento_nombre")));
+							writer.println(String.join("", "         Aporte Q. ",
+									String.valueOf(rsPagoGastos.getDouble("monto"))));
+							writer.print(" ");
+							writer.flush();
+						} else {
+							writer.println(String.join("", "    Entidad:", rsPagoGastos.getString("entidad_nombre"),
+									",", rsPagoGastos.getString("unidad_ejecutora_nombre")));
+							writer.println(String.join("", "         ", rsPagoGastos.getString("municipio_nombre"), ",",
+									rsPagoGastos.getString("departamento_nombre")));
+							writer.println(String.join("", "         ", rsPagoGastos.getString("renglon_nombre")));
+							writer.println(String.join("", "         Aporte Q. ",
+									String.valueOf(rsPagoGastos.getDouble("monto"))));
+							writer.print(" ");
+							writer.flush();
+						}
 					}
 
-					if (rsPagoGastos.getString("tipo").equals("MU")) {
-						writer.println(String.join("", rsPagoGastos.getString("renglon")));
-						writer.println(String.join("", "    Municipalidad de ", rsPagoGastos.getString("municipio_nombre"),",", rsPagoGastos.getString("departamento_nombre")));
-						writer.println(String.join("", "    Aporte Q. ", String.valueOf(rsPagoGastos.getDouble("monto")) ));
-						writer.print(" ");
-					} else {
-						writer.println(String.join("", "Entidad:", rsPagoGastos.getString("entidad_nombre"), ",",rsPagoGastos.getString("unidad_ejecutora_nombre")));
-						writer.println(String.join("", "    ", rsPagoGastos.getString("municipio_nombre"), ",",rsPagoGastos.getString("departamento_nombre")));
-						writer.println(String.join("", "    ", rsPagoGastos.getString("renglon_nombre")));
-						writer.println(String.join("", "    Aporte Q. ", String.valueOf(rsPagoGastos.getDouble("monto")) ));
-						writer.print(" ");
-					}
+					if (index < limiteMax)
+						hayDatos = false;
+					else
+						limiteMax = index + 1000;
+
+				} else {
+					hayDatos = false;
 				}
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
+
 			try {
 				dbpago_gastos.close();
 			} catch (SQLException se) {

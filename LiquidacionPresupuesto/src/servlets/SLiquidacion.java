@@ -34,6 +34,9 @@ public class SLiquidacion extends HttpServlet {
 			throws ServletException, IOException {
 		// TODO Auto-generated method stub
 
+	    response.setHeader("Content-Type", "text/plain");
+	    response.setHeader("success", "yes");
+
 		String mes = request.getParameter("mes");
 
 		if (!CUtils.isEmpty(mes)) {
@@ -42,7 +45,6 @@ public class SLiquidacion extends HttpServlet {
 			CLiquidacionPresupuestaria.getImpuestoGasto(response.getWriter());
 		}
 
-		response.getWriter().flush();
 		response.getWriter().close();
 	}
 

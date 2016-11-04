@@ -174,10 +174,10 @@ public class CGetISCVs {
 		buffer.append(cuerpo);
 
 		Map<String, String> images = new HashMap<String, String>();
-		images.put("imageFB", "fb_image.png");
-		images.put("imageTW", "twitter_image.png");
-		images.put("imageMF", "minfin_image.png");
-		images.put("imageSAT", "sat_image.png");
+		images.put("imageFB", "/logs/mail_pics/fb_image.png");
+		images.put("imageTW", "/logs/mail_pics/twitter_image.png");
+		images.put("imageMF", "/logs/mail_pics/minfin_image.png");
+		images.put("imageSAT", "/logs/mail_pics/sat_image.png");
 		
 		CUtils.send("rdminfin@gmail.com", mailTo, "", "", CUtils.MAIL_SUBJECT, true, buffer, images);
 	}

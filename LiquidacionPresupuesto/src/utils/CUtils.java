@@ -109,7 +109,7 @@ public class CUtils {
 				// BODY
 				MimeBodyPart mbp = new MimeBodyPart();
 				if (isHTMLFormat) {
-					mbp.setContent(body.toString(), "text/html");
+					mbp.setContent(body.toString(), "text/html; charset=UTF-8");
 				} else {
 					mbp.setText(body.toString());
 				}

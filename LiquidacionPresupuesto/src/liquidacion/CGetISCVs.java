@@ -15,7 +15,7 @@ import utils.CUtils;
 
 public class CGetISCVs {
 
-	private String getQuery(String from, String to) {
+	private String getQuery(int from, int to) {
 		StringBuilder query = new StringBuilder();
 
 		query.append("select orden, documento, formulario, valor_pago from ISCV ");
@@ -47,11 +47,12 @@ public class CGetISCVs {
 		query.append("and g.obra = ig.obra ");
 		query.append("and g.renglon = ig.renglon ");
 		query.append("and g.mes = ig.mes ");
+		query.append("and (( ig.tipo='MU' and g.organismo = 101 and g.correlativo = 2 and g.fuente =29) or (ig.tipo = 'FC' and g.fuente = 11))");
 
 		return query.toString();
 	}
 
-	public List<CISCV> getISCVs(String from, String to) {
+	public List<CISCV> getISCVs(int from, int to) {
 		CDatabase db = new CDatabase();
 
 		List<CISCV> pagos = new ArrayList<CISCV>();

@@ -26,16 +26,16 @@ public class SGetISCVPaids extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		String rangeFrom = request.getParameter("from");
-		String rangeTo = request.getParameter("to");
-
+		int rangeFrom = Integer.parseInt(request.getParameter("from"));
+		int rangeTo = Integer.parseInt(request.getParameter("to"));
+		
 		response.setContentType("application/json");
 		response.getWriter().println("{ \"data\":");
 
 		List<CISCV> info = new ArrayList<CISCV>();
 		CGetISCVs isvc = new CGetISCVs();
 
-		info = isvc.getISCVs(rangeFrom, rangeTo);
+		info = isvc.getISCVs(rangeFrom*10000, (rangeFrom*10000)+10);
 
 		Gson g = new Gson();
 		String res = g.toJson(info);

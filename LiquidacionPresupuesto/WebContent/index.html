@@ -233,6 +233,27 @@
 			}
 		}
 	}
+	
+	function enviarCorreoCustom() {
+		var email = prompt("Ingrese correo para enviar");
+
+		if (email != null) {
+			console.log("Enviar a: " + email);
+
+			if (isValidEmail(email)) {
+				ajax.get('SSendMail', {
+					orden : document.getElementById('uiOrden').value,
+					to : email
+				}, function(res) {
+					console.log("...enviado");
+				}, true);
+
+			} else {
+				console.log("email no valido")
+				document.getElementById("result").innerHTML = "email no valido";
+			}
+		}
+	}
 </script>
 </head>
 <body onload="loadISCVs()">
@@ -242,6 +263,12 @@
 			<td><input id="uiMes" type="text" /></td>
 			<td><input id="uiEjecutar" type="button" value="Ejecutar"
 				onclick="cargarDatos()" /></td>
+		</tr>
+		<tr>
+			<td>Enviar especifico:</td>
+			<td><input id="uiOrden" type="text" /></td>
+			<td><input id="uiEnviar" type="button" value="Enviar"
+				onclick="enviarCorreoCustom()" /></td>
 		</tr>
 	</table>
 	<p id="result"></p>

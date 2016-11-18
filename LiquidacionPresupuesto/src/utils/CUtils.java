@@ -1,9 +1,13 @@
 package utils;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPOutputStream;
 
 import javax.mail.Message;
 import javax.mail.Session;
@@ -12,6 +16,9 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import javax.servlet.http.HttpServletResponse;
+
+import com.google.gson.GsonBuilder;
 
 public class CUtils {
 
@@ -146,6 +153,31 @@ public class CUtils {
 		} else {
 			return false;
 		}
+	}
+
+	public static void writeJSon(HttpServletResponse response, String jsonText) throws IOException {
+		response.setContentType("application/json");
+		response.setHeader("Content-Encoding", "gzip");
+		response.setCharacterEncoding("UTF-8");
+
+		OutputStream output = response.getOutputStream();
+		GZIPOutputStream gz = new GZIPOutputStream(output);
+
+		gz.write(jsonText.getBytes("UTF-8"));
+		gz.close();
+		output.close();
+
+	}
+
+	public static String getJSonString(String nombre, List<?> objetos) {
+
+		String jsonText = new GsonBuilder().serializeNulls().create().toJson(objetos);
+
+		jsonText = String.join("", "\"" + nombre + "\":", jsonText);
+
+		jsonText = String.join("", "{\"success\":true,", jsonText, "}");
+
+		return jsonText;
 	}
 
 }

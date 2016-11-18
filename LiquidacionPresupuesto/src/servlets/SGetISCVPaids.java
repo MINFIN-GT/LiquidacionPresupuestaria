@@ -35,7 +35,7 @@ public class SGetISCVPaids extends HttpServlet {
 		List<CISCV> info = new ArrayList<CISCV>();
 		CGetISCVs isvc = new CGetISCVs();
 
-		info = isvc.getISCVs(rangeFrom*10000, (rangeFrom*10000)+10);
+		info = isvc.getISCVs(rangeFrom, rangeTo);
 
 		Gson g = new Gson();
 		String res = g.toJson(info);

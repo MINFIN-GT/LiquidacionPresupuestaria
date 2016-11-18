@@ -64,6 +64,14 @@
 	width: 100px;
 	height: 20px;
 }
+
+.hidden {
+	display: none;
+}
+
+.visible {
+	display: block;
+}
 </style>
 
 <script type="text/javascript">
@@ -128,6 +136,8 @@
 
 <script type="text/javascript">
 	var pos = 1;
+	var cuerpoCorro = "";
+	var nombreContribuyente = "";
 
 	function isValidEmail(mail) {
 		return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,4})+$/.test(mail);
@@ -153,9 +163,17 @@
 	function loadISCVs() {
 
 		var cantidad = Number(document.getElementById("uiMostar").value);
+		var intervalo = Number(document.getElementById("uiIntervalo").value);
 
-		var startPos = (pos - 1) * cantidad + 1;
-		var endPos = (pos) * cantidad;
+		var startPos = 1;
+
+		if (intervalo == 1) {
+			startPos = (pos - 1) * cantidad + 1;
+		} else {
+			startPos = (pos - 1) * intervalo + 1;
+		}
+
+		var endPos = startPos + cantidad - 1;
 
 		ajax.post('SGetISCVPaids', {
 			from : startPos,
@@ -192,10 +210,11 @@
 
 	function getTable(data) {
 		var table = "<table  id=\"table_box\" class=\"maintb\">";
-		table += "<tr><th>Documento</th><th>Formulario</th><th>Valor</th></tr>";
+		table += "<tr><th>Orden</th><th>Documento</th><th>Formulario</th><th>Valor</th></tr>";
 
 		for (var i = 0; i < data.length; i++) {
 			table += "<tr onclick=\"selected(" + data[i].orden + ")\">";
+			table += "<td>" + data[i].orden + "</td>";
 			table += "<td>" + data[i].documento + "</td>";
 			table += "<td>" + data[i].formulario + "</td>";
 			table += "<td>" + data[i].pago + "</td>";
@@ -210,114 +229,207 @@
 	function selected(orden) {
 		console.log("Enviar correo al: " + orden);
 
-		enviarCorreo(orden);
+		prepararCorreo(orden);
 	}
 
-	function enviarCorreo(orden) {
-		var email = prompt("Ingrese correo para enviar " + orden, "");
+	function prepararCorreo(orden) {
+		ajax.get('SSendMail', {
+			accion : 'preparar',
+			orden : orden
+		}, function(res) {
+			res = JSON.parse(res);
+			if (res.success) {
+				cuerpo = res.cuerpo[0];
 
-		if (email != null) {
-			console.log("Enviar a: " + email);
+				cuerpoMod = cuerpo;
+				cuerpoMod = cuerpoMod.replace("cid:imageFB",
+						"./assets/img/fb_image.png");
+				cuerpoMod = cuerpoMod.replace("cid:imageTW",
+						"./assets/img/twitter_image.png");
+				cuerpoMod = cuerpoMod.replace("cid:imageMF",
+						"./assets/img/minfin_image.png");
+				cuerpoMod = cuerpoMod.replace("cid:imageSAT",
+						"./assets/img/sat_image.png");
 
-			if (isValidEmail(email)) {
+				document.getElementById("cuerpo").innerHTML = cuerpoMod;
+
+				ocultar();
+			}
+		}, true);
+	}
+
+	function prepararCorreoCustom() {
+		prepararCorreo(document.getElementById('uiOrden').value);
+	}
+
+	function enviarCorreo() {
+		var email = document.getElementById('uiCorreo').value;
+
+		if (isValidEmail(email)) {
+			if (nombreContribuyente != "") {
+				var cuerpoMod = cuerpo
+						.replace("#USUARIO#", nombreContribuyente);
+
+				console.log("Enviar a: " + email);
+
 				ajax.get('SSendMail', {
-					orden : orden,
-					to : email
+					accion : 'enviar',
+					to : email,
+					cuerpo : cuerpoMod
 				}, function(res) {
 					console.log("...enviado");
 				}, true);
 
 			} else {
-				console.log("email no valido")
-				document.getElementById("result").innerHTML = "email no valido";
+				document.getElementById("uiMessage").innerHTML = "Por favor complete los campos Nombre y Correo";
 			}
+		} else {
+			document.getElementById("uiMessage").innerHTML = "email no valido";
+			console.log("email no valido");
 		}
 	}
-	
-	function enviarCorreoCustom() {
-		var email = prompt("Ingrese correo para enviar");
 
-		if (email != null) {
-			console.log("Enviar a: " + email);
+	function ocultar() {
+		var doctos = document.getElementById('doctos');
+		var correo = document.getElementById('correo');
 
-			if (isValidEmail(email)) {
-				ajax.get('SSendMail', {
-					orden : document.getElementById('uiOrden').value,
-					to : email
-				}, function(res) {
-					console.log("...enviado");
-				}, true);
+		doctos.setAttribute('class', 'hidden');
+		correo.setAttribute('class', 'visible');
 
-			} else {
-				console.log("email no valido")
-				document.getElementById("result").innerHTML = "email no valido";
-			}
+		document.getElementById("uiMessage").innerHTML = "";
+		document.getElementById("uiContribuyente").value = "";
+		document.getElementById("uiCorreo").value = "";
+	}
+
+	function mostrar() {
+		var doctos = document.getElementById('doctos');
+		var correo = document.getElementById('correo');
+
+		correo.setAttribute('class', 'hidden');
+		doctos.setAttribute('class', 'visible');
+
+		document.getElementById("uiMessage").innerHTML = "";
+	}
+
+	function replaceContribuyente() {
+		document.getElementById("uiMessage").innerHTML = "";
+		nombreContribuyente = document.getElementById('uiContribuyente').value;
+
+		var cuerpoMod = "";
+		if (nombreContribuyente == "") {
+			cuerpoMod = cuerpo;
+		} else {
+			cuerpoMod = cuerpo.replace("#USUARIO#", nombreContribuyente);
 		}
+
+		cuerpoMod = cuerpoMod.replace("cid:imageFB",
+				"./assets/img/fb_image.png");
+		cuerpoMod = cuerpoMod.replace("cid:imageTW",
+				"./assets/img/twitter_image.png");
+		cuerpoMod = cuerpoMod.replace("cid:imageMF",
+				"./assets/img/minfin_image.png");
+		cuerpoMod = cuerpoMod.replace("cid:imageSAT",
+				"./assets/img/sat_image.png");
+		document.getElementById("cuerpo").innerHTML = cuerpoMod;
+	}
+
+	function validateEmail() {
+		document.getElementById("uiMessage").innerHTML = "";
 	}
 </script>
 </head>
 <body onload="loadISCVs()">
-	<table>
-		<tr>
-			<td>Mes a cargar:</td>
-			<td><input id="uiMes" type="text" /></td>
-			<td><input id="uiEjecutar" type="button" value="Ejecutar"
-				onclick="cargarDatos()" /></td>
-		</tr>
-		<tr>
-			<td>Enviar especifico:</td>
-			<td><input id="uiOrden" type="text" /></td>
-			<td><input id="uiEnviar" type="button" value="Enviar"
-				onclick="enviarCorreoCustom()" /></td>
-		</tr>
-	</table>
-	<p id="result"></p>
-
-	Número de registros a mostrar:
-	<select id="uiMostar" onchange="reiniciar()" style="width: 100px;">
-		<option value="10">10</option>
-		<option value="20">20</option>
-		<option value="30">30</option>
-		<option value="40">40</option>
-		<option value="50">50</option>
-		<option value="60">60</option>
-		<option value="70">70</option>
-		<option value="80">80</option>
-		<option value="90">90</option>
-		<option value="100">100</option>
-	</select>
-	<br />
-	<br />
-
-	<div id="content">
-		<table id="table_box" class="maintb">
+	<div id="doctos" class="visible">
+		<table>
 			<tr>
-				<th>Documento</th>
-				<th>Formulario</th>
-				<th>Valor</th>
-			</tr>
-			<tr onclick="selected(1)">
-				<td>1</td>
-				<td>1</td>
-				<td>1</td>
+				<td>Enviar especifico:</td>
+				<td><input id="uiOrden" type="text" /></td>
+				<td><input id="uiEnviar" type="button" value="Enviar"
+					onclick="prepararCorreoCustom()" /></td>
 			</tr>
 		</table>
+		<p id="result"></p>
+
+		Número de registros a mostrar: <select id="uiMostar"
+			onchange="reiniciar()" style="width: 100px;">
+			<option value="10">10</option>
+			<option value="20">20</option>
+			<option value="30">30</option>
+			<option value="40">40</option>
+			<option value="50">50</option>
+			<option value="60">60</option>
+			<option value="70">70</option>
+			<option value="80">80</option>
+			<option value="90">90</option>
+			<option value="100">100</option>
+		</select> Intervalo: <select id="uiIntervalo" onchange="reiniciar()"
+			style="width: 100px;">
+			<option value="1">Ninguno</option>
+			<option value="1000">1000</option>
+			<option value="10000">10000</option>
+			<option value="50000">50000</option>
+			<option value="100000">100000</option>
+		</select> <br /> <br />
+
+		<div id="content">
+			<table id="table_box" class="maintb">
+				<tr>
+					<th>Orden</th>
+					<th>Documento</th>
+					<th>Formulario</th>
+					<th>Valor</th>
+				</tr>
+				<tr onclick="selected(1)">
+					<td>1</td>
+					<td>1</td>
+					<td>1</td>
+					<td>1</td>
+				</tr>
+			</table>
+		</div>
+
+		<br />
+
+		<div id="container">
+			<div id="left">
+				<input id="uiEjecutar" type="button" value="<< Anterior"
+					onclick="anterior()" />
+			</div>
+			<div id="center">
+				<div id="pagina"></div>
+			</div>
+			<div id="right">
+				<input id="uiEjecutar" type="button" value="Siguiente >>"
+					onclick="siguiente()" />
+			</div>
+		</div>
 	</div>
 
-	<br />
+	<div id="correo" class="hidden">
+		<table>
+			<tr>
+				<td>Nombre contribuyente:</td>
+				<td><input id="uiContribuyente" type="text"
+					onkeydown="replaceContribuyente()"
+					onchange="replaceContribuyente()" onkeyup="replaceContribuyente()"
+					style="width: 500px" /></td>
+			</tr>
+			<tr>
+				<td>Correo contribuyente:</td>
+				<td><input id="uiCorreo" type="text" style="width: 500px"
+					onchange="validateEmail" /></td>
+				<td><input id="uiEnviar" type="button" value="Enviar"
+					onclick="enviarCorreo()" style="width: 150px" /></td>
+				<td><input id="uiRegresar" type="button" value="Regresar"
+					onclick="mostrar()" style="width: 150px" /></td>
+			</tr>
+		</table>
+		<div id="uiMessage"
+			style="width: 100%; text-align: center; color: red;"></div>
+		<div id="cuerpo"
+			style="border-width: 1px; border-style: solid; padding: 10px; margin: 50px;"></div>
 
-	<div id="container">
-		<div id="left">
-			<input id="uiEjecutar" type="button" value="<< Anterior"
-				onclick="anterior()" />
-		</div>
-		<div id="center">
-			<div id="pagina"></div>
-		</div>
-		<div id="right">
-			<input id="uiEjecutar" type="button" value="Siguiente >>"
-				onclick="siguiente()" />
-		</div>
+
 	</div>
 
 </body>

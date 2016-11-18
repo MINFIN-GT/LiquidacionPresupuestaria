@@ -29,11 +29,20 @@ public class CGetISCVs {
 	private String getQueryGasto(String orden) {
 		StringBuilder query = new StringBuilder();
 
-		query.append(
-				"select i.valor_pago, i.fecha_recaudo, ig.tipo, ig.monto, g.municipio_nombre, g.departamento_nombre, g.entidad_nombre, g.unidad_ejecutora_nombre, g.renglon_nombre ");
+		query.append("select ");
+		query.append(" i.valor_pago, i.fecha_recaudo, ");
+		query.append("ig.tipo, ig.monto, ");
+		query.append("g.municipio_nombre, g.departamento_nombre, g.entidad_nombre, g.unidad_ejecutora_nombre, ");
+		query.append("ifnull(gr.renglon_nombre,g.renglon_nombre) renglon_nombre ");
 		query.append("from ISCV i,  ");
 		query.append("ISCV_GASTO ig, ");
 		query.append("GASTO g ");
+		query.append("left join GASTO_RENGLON gr ");
+		query.append("on ( ");
+		query.append("     gr.entidad = g.entidad ");
+		query.append("     and gr.renglon = g.renglon ");
+		query.append("     and gr.ejercicio = 2016 ");
+		query.append(") ");
 		query.append("where orden = ").append(orden).append(" ");
 		query.append("and ig.documento = i.documento ");
 		query.append("and ig.formulario = i.formulario  ");
@@ -47,7 +56,11 @@ public class CGetISCVs {
 		query.append("and g.obra = ig.obra ");
 		query.append("and g.renglon = ig.renglon ");
 		query.append("and g.mes = ig.mes ");
-		query.append("and (( ig.tipo='MU' and g.organismo = 101 and g.correlativo = 2 and g.fuente =29) or (ig.tipo = 'FC' and g.fuente = 11))");
+		query.append("and g.geografico = ig.geografico_gasto ");
+		query.append("and ( ");
+		query.append("     (ig.tipo = 'MU' and g.organismo = 101 and g.correlativo = 2 and g.fuente = 29) ");
+		query.append("     or (ig.tipo = 'FC' and g.fuente = 11) ");
+		query.append(")");
 
 		return query.toString();
 	}
@@ -114,7 +127,7 @@ public class CGetISCVs {
 
 	// bar reformador Karen Guzman 3596 55k 2%
 
-	public void generarCorreo(String orden, String mailTo) {
+	public String generarCorreo(String orden) {
 
 		String cuerpo = CUtils.MAIL_BODY;
 		String textMuni = "";
@@ -160,16 +173,16 @@ public class CGetISCVs {
 
 		}
 
-		cuerpo = cuerpo.replace("#USUARIO#", mailTo);
 		cuerpo = cuerpo.replace("#MONTO#", String.format("%.2f", monto.floatValue()));
 		cuerpo = cuerpo.replace("#MUNI#", textMuni);
 		cuerpo = cuerpo.replace("#FONDO#", textFondo);
 
+		return cuerpo;
+	}
+	
+	public void enviarCorreo(String mailTo, String cuerpo){
 		CLogger.writeConsole(cuerpo);
 
-		//comentar todo lo anterior si se desea realizar prueba sin conexion a base de datos y descomentar la linea siguiente
-		//String cuerpo = "Estimado <b>lurendel@gmail.com</b>,<br /><br />Como parte de nuestra tarea de transparencia en el manejo de los impuestos de los contribuyentes.  Atentamente le informamos que su pago de impuesto sobre circulación de vehículos de <b>Q 136.90</b>, fue destinado hacia los siguientes programas:<br /><br /><b>TRANS. A  LAS MUNICIPALIDADES</b><br />MUNICIPALIDAD DE SAN MIGUEL IXTAHUACAN, SAN MARCOS<br />Aporte: <b>Q 68.45</b><br /><br />PRESIDENCIA DE LA REPÚBLICA, SECRETARÍA DE ASUNTOS ADM.Y DE SEG.DE LA PRESIDENCIA<br />GUATEMALA, GUATEMALA<br /><b>PERSONAL PERMANENTE</b><br />Aporte: <b>Q 68.45</b><br /><br />Agradecemos su aporte responsable con el país y le invitamos a seguir con el cumplimiento de sus deberes ciudadano.  Por nuestra parte, le reiteramos por velar porque los recursos de los guatemaltecos sean asignados a las necesidades más sentidas de la población.<br /><br />También le invitamos a seguirnos en las redes sociales para conocer más,<br /><br /><a href=\"https://es-la.facebook.com/minfingt\"><img src=\"cid:imageFB\" alt=\"https://es-la.facebook.com/minfingt\"/></a><a href=\"https://twitter.com/minfingt?lang=es\"><img src=\"cid:imageTW\" alt=\"https://twitter.com/minfingt?lang=es\"/></a><br /><br />Atentamente,<br /><br /><div style=\"text-align:center;\">Ministerio de Finanzas Públicas y Superintendencia de Administración Tributaria<br /><br /><img src=\"cid:imageMF\" alt=\"MinFin\"/><img src=\"cid:imageSAT\" alt=\"SAT\"/></div>";
-		
 		StringBuffer buffer = new StringBuffer();
 		
 		buffer.append(cuerpo);

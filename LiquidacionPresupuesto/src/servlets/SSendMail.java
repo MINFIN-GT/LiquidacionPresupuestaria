@@ -1,6 +1,9 @@
 package servlets;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -31,15 +34,34 @@ public class SSendMail extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		String mailTo = request.getParameter("to");
-		String orden = request.getParameter("orden");
+		String accion = request.getParameter("accion");
 
-		if (!CUtils.isEmpty(mailTo) && !CUtils.isEmpty(orden)) {
-			CGetISCVs iscv = new CGetISCVs();
+		if (!CUtils.isEmpty(accion)) {
+			if (accion.equalsIgnoreCase("preparar")) {
+				String orden = request.getParameter("orden");
 
-			iscv.generarCorreo(orden, mailTo);
+				if (!CUtils.isEmpty(orden)) {
+					CGetISCVs iscv = new CGetISCVs();
 
+					String cuerpo = iscv.generarCorreo(orden);
+
+					List<String> objetos = new ArrayList<String>();
+					objetos.add(cuerpo);
+
+					CUtils.writeJSon(response, CUtils.getJSonString("cuerpo", objetos));
+				}
+			} else {
+				String mailTo = request.getParameter("to");
+				String cuerpo = request.getParameter("cuerpo");
+
+				if (!CUtils.isEmpty(mailTo)) {
+					CGetISCVs iscv = new CGetISCVs();
+
+					iscv.enviarCorreo(mailTo, cuerpo);
+				}
+			}
 		}
+
 	}
 
 	/**
